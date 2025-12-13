@@ -1,29 +1,45 @@
 import React, { use } from 'react';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { AuthContext } from '../provider/AuthProvider';
 
 const Register = () => {
+    const { createUser, setUser , updateUser } = use(AuthContext);
+    const navigate = useNavigate();
 
-    const { createUser, setUser } = use(AuthContext);
+   const handleRegister = (e) => {
+    e.preventDefault();
 
-    const handleRegister = (e) => {
-        e.preventDefault();
+    const form = e.target;
+    const name = form.name.value;
+    const photoURL = form.photoURL.value;
+    const email = form.email.value;
+    const password = form.password.value;
 
-        const form = e.target;
-        const name = form.name.value;
-        const photoURL = form.photoURL.value;
-        const email = form.email.value;
-        const password = form.password.value;
+    createUser(email, password)
+        .then(result => {
+            const loggedUser = result.user;
+            // console.log("User created:", loggedUser);
 
-        createUser(email, password)
-            .then(result => {
-                console.log("User created:", result.user);
-                setUser(user);
-            })
-            .catch(error => {
-                console.log("Error:", error.message);
-            });
-    };
+            // update profile
+            updateUser({ displayName: name, photoURL: photoURL })
+                .then(() => {
+                    setUser({
+                        ...loggedUser,
+                        displayName: name,
+                        photoURL: photoURL
+                    });
+                    navigate('/auth/login'); // navigate after register
+                })
+                .catch(error => {
+                    console.log("Profile update error:", error.message);
+                    setUser(loggedUser);
+                });
+        })
+        .catch(error => {
+            console.log("Register error:", error.message);
+        });
+};
+
 
     return (
         <div className="card bg-base-100 w-full max-w-[500px] shrink-0 shadow-2xl mx-auto">
@@ -43,9 +59,7 @@ const Register = () => {
                     <label className="label">Password</label>
                     <input type="password" name="password" className="input" required />
 
-                    <button type="submit" className="btn btn-neutral mt-4">
-                        Register
-                    </button>
+                    <button type="submit" className="btn btn-neutral mt-4">Register</button>
                 </form>
 
                 <p>
